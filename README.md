@@ -10,13 +10,14 @@ An in-memory implementation of a time series database similar to InfluxDB, writt
 - **Field filtering**: Query by field values with various operators
 - **Multiple series**: Automatically groups points by measurement and tags
 - **In-memory storage**: Fast access with no disk I/O overhead
+- **Aggregation functions**: Simple aggregation functions like sum, mean, min, max on time series data 
 
 ## Installation
 
 No external dependencies required - uses only Python standard library.
 
 ```bash
-cd /Users/vsharma3/work/repos/influxdb-inmemory
+cd /Users/vsharma3/work/repos/inmemory-tsdb
 # Python 3.7+ required
 ```
 
@@ -153,67 +154,121 @@ high_usage = (query
 ### Example 2: Sensor Data
 
 ```python
-from src.database import InMemoryTSDB
-from datetime import datetime, timedelta
-import random
+def example_search_platform():
+    """Example 5: Searching platform information"""
+    print("\n Add some CPU metrics for FDS service in different regions and worker groups")
+    print("\n Then query data points in a time range")
+    print("\n And then demo some aggregation functions on time series data")x
 
-db = InMemoryTSDB()
-
-# Simulate temperature sensor data
-sensors = ['sensor1', 'sensor2', 'sensor3']
-for sensor in sensors:
-    for i in range(50):
-        db.write(
-            measurement='temperature',
-            fields={'value': 20 + random.uniform(-5, 5)},
-            tags={'sensor': sensor, 'location': 'warehouse'},
-            timestamp=datetime.now() - timedelta(minutes=50-i)
+    db = InMemoryTSDB()
+    points = [
+        Point(
+            measurement='cpu',
+            fields={'value': 85},
+            tags={'region': 'us-east', 'worker': 'jira'},
+            timestamp=datetime.now() - timedelta(minutes=2)
+        ),
+        Point(
+            measurement='cpu',
+            fields={'value': 75},
+            tags={'region': 'us-east', 'worker': 'jira'},
+            timestamp=datetime.now() - timedelta(minutes=1)
+        ),
+        Point(
+            measurement='cpu',
+            fields={'value': 55},
+            tags={'region': 'us-east', 'worker': 'confluence'},
+            timestamp=datetime.now() - timedelta(minutes=2)
+        ),
+        Point(
+            measurement='cpu',
+            fields={'value': 65},
+            tags={'region': 'us-east', 'worker': 'confluence'},
+            timestamp=datetime.now() - timedelta(minutes=1)
+        ),
+        Point(
+            measurement='cpu',
+            fields={'value': 45},
+            tags={'region': 'us-west', 'worker': 'jira'},
+            timestamp=datetime.now() - timedelta(minutes=2)
+        ),
+        Point(
+            measurement='cpu',
+            fields={'value': 55},
+            tags={'region': 'us-west', 'worker': 'jira'},
+            timestamp=datetime.now() - timedelta(minutes=1)
+        ),
+        Point(
+            measurement='cpu',
+            fields={'value': 80},
+            tags={'region': 'us-west', 'worker': 'confluence'},
+            timestamp=datetime.now() - timedelta(minutes=2)
+        ),
+        Point(
+            measurement='cpu',
+            fields={'value': 90},
+            tags={'region': 'us-west', 'worker': 'confluence'},
+            timestamp=datetime.now() - timedelta(minutes=1)
         )
+    ]
 
-# Query specific sensor
-sensor1_data = db.query(
-    measurement='temperature',
-    tags={'sensor': 'sensor1'},
-    start=datetime.now() - timedelta(hours=1)
-)
+    db.write_points(points)
 
-# Find anomalies
-query = db.create_query()
-anomalies = (query
-    .from_measurement('temperature')
-    .where_field('value', '>', 25)
-    .execute(db._series))
-```
+    # Query all events
+    all_events = db.query(measurement='cpu')
+    print(f"\nTotal events: {len(all_events)}")
 
-### Example 3: Using Point Objects
-
-```python
-from src.database import InMemoryTSDB
-from src.point import Point
-from datetime import datetime
-
-db = InMemoryTSDB()
-
-# Create points explicitly
-points = [
-    Point(
-        measurement='events',
-        fields={'count': 10, 'duration': 1.5},
-        tags={'type': 'api', 'status': 'success'},
-        timestamp=datetime.now()
-    ),
-    Point(
-        measurement='events',
-        fields={'count': 5, 'duration': 0.8},
-        tags={'type': 'api', 'status': 'error'},
-        timestamp=datetime.now()
+    jira_events = db.query(
+        measurement='cpu',
+        tags={'worker': 'jira'}
     )
-]
+    print(f"Jira worker events: {len(jira_events)}")
 
-db.write_points(points)
+    confluence_events = db.query(
+        measurement='cpu',
+        tags={'worker': 'confluence'}
+    )
+    print(f"Confluence worker events: {len(confluence_events)}")
 
-# Query all events
-all_events = db.query(measurement='events')
+    jira_east_events = db.query(
+        measurement='cpu',
+        tags={'worker': 'jira', 'region': 'us-east'}
+    )
+
+    jira_west_events = db.query(
+        measurement='cpu',
+        tags={'worker': 'jira', 'region': 'us-west'}
+    )
+
+    print("Jira worker aggregate metrics")
+    sum_east = Aggregate.sum(jira_events, 'value')
+    avg_east = Aggregate.average(jira_events, 'value')
+    min_east = Aggregate.min(jira_events, 'value')
+    max_east = Aggregate.max(jira_events, 'value')
+    print_point(sum_east)
+    print_point(avg_east)
+    print_point(min_east)
+    print_point(max_east)
+
+    print("\n Jira worker us-east aggregate metrics")
+    sum_jira_east = Aggregate.sum(jira_east_events, 'value')
+    avg_jira_east = Aggregate.average(jira_east_events, 'value')
+    min_jira_east = Aggregate.min(jira_east_events, 'value')
+    max_jira_east = Aggregate.max(jira_east_events, 'value')
+    print_point(sum_jira_east)
+    print_point(avg_jira_east)
+    print_point(min_jira_east)
+    print_point(max_jira_east)
+
+    print("\n Jira worker us-west aggregate metrics")
+    sum_jira_west = Aggregate.sum(jira_west_events, 'value')
+    avg_jira_west = Aggregate.average(jira_west_events, 'value')
+    min_jira_west = Aggregate.min(jira_west_events, 'value')
+    max_jira_west = Aggregate.max(jira_west_events, 'value')
+    print_point(sum_jira_west)
+    print_point(avg_jira_west)
+    print_point(min_jira_west)
+    print_point(max_jira_west)
 ```
 
 ## Performance Considerations
@@ -226,7 +281,6 @@ all_events = db.query(measurement='events')
 ## Limitations
 
 - Data is not persisted (in-memory only)
-- No built-in aggregation functions (can be added in application layer)
 - No replication or clustering
 - No authentication or authorization
 - Single-threaded (not thread-safe)
@@ -235,13 +289,5 @@ all_events = db.query(measurement='events')
 
 Potential improvements:
 - Data persistence (JSON, CSV, or binary format)
-- Aggregation functions (mean, sum, max, min, etc.)
 - Thread-safe operations
 - Data retention policies
-- Export/import functionality
-- Query optimization
-
-## License
-
-This is a simple implementation for demonstration purposes.
-
