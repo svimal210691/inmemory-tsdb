@@ -118,40 +118,7 @@ Query builder for complex queries.
 - `execute(series_dict)`: Execute query and return results
 
 ## Examples
-
-### Example 1: CPU Monitoring
-
-```python
-from src.database import InMemoryTSDB
-from datetime import datetime, timedelta
-
-db = InMemoryTSDB()
-
-# Simulate CPU monitoring data
-for i in range(100):
-    db.write(
-        measurement='cpu',
-        fields={'usage': 50 + (i % 30), 'load': 1.5 + (i % 10) * 0.1},
-        tags={'host': f'server{i % 5}', 'region': 'us-east'},
-        timestamp=datetime.now() - timedelta(minutes=100-i)
-    )
-
-# Query recent high CPU usage
-high_cpu = db.query(
-    measurement='cpu',
-    start=datetime.now() - timedelta(hours=1)
-)
-
-# Filter by field value
-query = db.create_query()
-high_usage = (query
-    .from_measurement('cpu')
-    .where_field('usage', '>', 70)
-    .limit(20)
-    .execute(db._series))
-```
-
-### Example 2: Sensor Data
+### Example 1: Service CPU monitoring
 
 ```python
 def example_search_platform():
