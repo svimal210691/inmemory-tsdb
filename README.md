@@ -118,124 +118,58 @@ Query builder for complex queries.
 - `execute(series_dict)`: Execute query and return results
 
 ## Examples
-### Example 1: Service CPU monitoring
+### Example 1: Find high CPU usage data points
 
 ```python
-def example_search_platform():
-    """Example 5: Searching platform information"""
-    print("\n Add some CPU metrics for FDS service in different regions and worker groups")
-    print("\n Then query data points in a time range")
-    print("\n And then demo some aggregation functions on time series data")x
-
+def example_high_cpu_usage():
+    """Example: Add some CPU usage data points for few minutes and find high cpu usage data points"""
     db = InMemoryTSDB()
-    points = [
-        Point(
-            measurement='cpu',
-            fields={'value': 85},
-            tags={'region': 'us-east', 'worker': 'jira'},
-            timestamp=datetime.now() - timedelta(minutes=2)
-        ),
-        Point(
-            measurement='cpu',
-            fields={'value': 75},
-            tags={'region': 'us-east', 'worker': 'jira'},
-            timestamp=datetime.now() - timedelta(minutes=1)
-        ),
-        Point(
-            measurement='cpu',
-            fields={'value': 55},
-            tags={'region': 'us-east', 'worker': 'confluence'},
-            timestamp=datetime.now() - timedelta(minutes=2)
-        ),
-        Point(
-            measurement='cpu',
-            fields={'value': 65},
-            tags={'region': 'us-east', 'worker': 'confluence'},
-            timestamp=datetime.now() - timedelta(minutes=1)
-        ),
-        Point(
-            measurement='cpu',
-            fields={'value': 45},
-            tags={'region': 'us-west', 'worker': 'jira'},
-            timestamp=datetime.now() - timedelta(minutes=2)
-        ),
-        Point(
-            measurement='cpu',
-            fields={'value': 55},
-            tags={'region': 'us-west', 'worker': 'jira'},
-            timestamp=datetime.now() - timedelta(minutes=1)
-        ),
-        Point(
-            measurement='cpu',
-            fields={'value': 80},
-            tags={'region': 'us-west', 'worker': 'confluence'},
-            timestamp=datetime.now() - timedelta(minutes=2)
-        ),
-        Point(
-            measurement='cpu',
-            fields={'value': 90},
-            tags={'region': 'us-west', 'worker': 'confluence'},
-            timestamp=datetime.now() - timedelta(minutes=1)
-        )
-    ]
-
-    db.write_points(points)
+    add_data_points(db)
+    now = datetime.now()
 
     # Query all events
     all_events = db.query(measurement='cpu')
     print(f"\nTotal events: {len(all_events)}")
 
-    jira_events = db.query(
-        measurement='cpu',
-        tags={'worker': 'jira'}
-    )
-    print(f"Jira worker events: {len(jira_events)}")
+    # Use query builder - find high CPU usage
+    query = db.create_query()
+    results = (query
+               .from_measurement('cpu')
+               .where_tags(region='us-east')
+               .time_range(start=now - timedelta(minutes=5))
+               .where_field('value', '>', 70)
+               .limit(5))
+    results = db.execute_query(results)
 
-    confluence_events = db.query(
-        measurement='cpu',
-        tags={'worker': 'confluence'}
-    )
-    print(f"Confluence worker events: {len(confluence_events)}")
+    print(f"\nFound {len(results)} points with CPU usage > 70%")
+    if results:
+        for point in results:
+            print_point(point)
+    else:
+        # Show some data to demonstrate query works
+        all_cpu = db.query(measurement='cpu', limit=5)
+        print("  (No points > 70%, showing sample data instead:)")
+        for point in all_cpu[:3]:
+            print(f"  Worker: {point.tags['worker']}, Usage: {point.fields['value']}%")
+```
 
-    jira_east_events = db.query(
-        measurement='cpu',
-        tags={'worker': 'jira', 'region': 'us-east'}
-    )
+### Example 2: Compute aggregates on data points 
 
-    jira_west_events = db.query(
-        measurement='cpu',
-        tags={'worker': 'jira', 'region': 'us-west'}
-    )
+```python
+def example_metric_aggregates():
+    """Example 5: Searching platform information"""
+    print("\n Add some CPU metrics for FDS service in different regions and worker groups")
+    print("\n Then query data points in a time range")
+    print("\n And then demo some aggregation functions on time series data")
 
-    print("Jira worker aggregate metrics")
-    sum_east = Aggregate.sum(jira_events, 'value')
-    avg_east = Aggregate.average(jira_events, 'value')
-    min_east = Aggregate.min(jira_events, 'value')
-    max_east = Aggregate.max(jira_events, 'value')
-    print_point(sum_east)
-    print_point(avg_east)
-    print_point(min_east)
-    print_point(max_east)
+    db = InMemoryTSDB()
+    add_data_points(db)
 
-    print("\n Jira worker us-east aggregate metrics")
-    sum_jira_east = Aggregate.sum(jira_east_events, 'value')
-    avg_jira_east = Aggregate.average(jira_east_events, 'value')
-    min_jira_east = Aggregate.min(jira_east_events, 'value')
-    max_jira_east = Aggregate.max(jira_east_events, 'value')
-    print_point(sum_jira_east)
-    print_point(avg_jira_east)
-    print_point(min_jira_east)
-    print_point(max_jira_east)
+    # Query all events
+    all_events = db.query(measurement='cpu')
+    print(f"\nTotal events: {len(all_events)}")
 
-    print("\n Jira worker us-west aggregate metrics")
-    sum_jira_west = Aggregate.sum(jira_west_events, 'value')
-    avg_jira_west = Aggregate.average(jira_west_events, 'value')
-    min_jira_west = Aggregate.min(jira_west_events, 'value')
-    max_jira_west = Aggregate.max(jira_west_events, 'value')
-    print_point(sum_jira_west)
-    print_point(avg_jira_west)
-    print_point(min_jira_west)
-    print_point(max_jira_west)
+    log_aggregates(db)
 ```
 
 ## Performance Considerations

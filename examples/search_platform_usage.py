@@ -104,7 +104,7 @@ def log_aggregates(db:InMemoryTSDB):
 
 
 
-def example_search_platform():
+def example_metric_aggregates():
     """Example 5: Searching platform information"""
     print("\n Add some CPU metrics for FDS service in different regions and worker groups")
     print("\n Then query data points in a time range")
@@ -119,6 +119,38 @@ def example_search_platform():
 
     log_aggregates(db)
 
+def example_high_cpu_usage():
+    """Example: Add some CPU usage data points for few minutes and find high cpu usage data points"""
+    db = InMemoryTSDB()
+    add_data_points(db)
+    now = datetime.now()
+
+    # Query all events
+    all_events = db.query(measurement='cpu')
+    print(f"\nTotal events: {len(all_events)}")
+
+    # Use query builder - find high CPU usage
+    query = db.create_query()
+    results = (query
+               .from_measurement('cpu')
+               .where_tags(region='us-east')
+               .time_range(start=now - timedelta(minutes=5))
+               .where_field('value', '>', 70)
+               .limit(5))
+    results = db.execute_query(results)
+
+    print(f"\nFound {len(results)} points with CPU usage > 70%")
+    if results:
+        for point in results:
+            print_point(point)
+    else:
+        # Show some data to demonstrate query works
+        all_cpu = db.query(measurement='cpu', limit=5)
+        print("  (No points > 70%, showing sample data instead:)")
+        for point in all_cpu[:3]:
+            print(f"  Worker: {point.tags['worker']}, Usage: {point.fields['value']}%")
+
+
 def print_point(point: Point):
     """Helper function to print a Point object"""
     print(f"Measurement: {point.measurement}, Tags: {point.tags}, "
@@ -131,8 +163,5 @@ def print_aggregate_metric(aggregate: AggregateMetric):
           f"Aggregate value: {aggregate.value}")
 
 if __name__ == '__main__':
-#     example_basic_write_and_query()
-#     example_query_builder()
-#     example_multiple_series()
-#     example_point_objects()
-    example_search_platform()
+    #example_metric_aggregates()
+    example_high_cpu_usage()
