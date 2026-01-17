@@ -309,8 +309,19 @@ def example_search_platform():
 
 def compression_example():
     cpu_usage_list = [random.randint(1, 100) for _ in range(1000000)]
-    CompressionUtil.compress_simple(cpu_usage_list)
-    CompressionUtil.compress_after_xor(cpu_usage_list)
+    print("Simple compression")
+    CompressionUtil.compress_list_simple(cpu_usage_list)
+    print("Compression after XOR")
+    CompressionUtil.compress_list_after_xor(cpu_usage_list)
+
+    print("Compressing timestamps simple")
+    timestamp_list = [(datetime.now() - timedelta(hours=random.randint(0, 24))) for i in range(1000000)]
+    CompressionUtil.compress_timestamps(timestamp_list)
+
+    print("Compressing timestamps delta of delta")
+    CompressionUtil.compress_timestamps_delta(timestamp_list)
+
+
 
 
 def print_point(point: Point):
