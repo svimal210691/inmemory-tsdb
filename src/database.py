@@ -119,6 +119,13 @@ class InMemoryTSDB:
     def get_series_count(self) -> int:
         """Get the total number of series"""
         return len(self._series)
+
+    def get_all_series_keys(self) -> List[str]:
+        """Get all time series registered in DB"""
+        keys = []
+        for key, value in self._series.items():
+            keys.append(key)
+        return keys
     
     def get_point_count(self) -> int:
         """Get the total number of points across all series"""

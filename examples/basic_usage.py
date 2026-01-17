@@ -6,6 +6,7 @@ Basic usage examples for the in-memory time series database
 import sys
 import os
 from datetime import datetime, timedelta
+import random
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -13,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from src.database import InMemoryTSDB
 from src.point import Point
 from src.aggregate import Aggregate
+from src.compression import CompressionUtil
 
 
 def example_basic_write_and_query():
@@ -40,7 +42,7 @@ def example_basic_write_and_query():
     # Query with time range
     recent_points = db.query(
         measurement='temperature',
-        start=now - timedelta(minutes=5)
+        start = now - timedelta(minutes=5)
     )
     print(f"Points in last 5 minutes: {len(recent_points)}")
     
@@ -120,6 +122,12 @@ def example_multiple_series():
                 tags={'sensor': sensor, 'location': 'warehouse'},
                 timestamp=now - timedelta(minutes=i)
             )
+
+    db.write(measurement='humidity',
+                fields={'value': 50 + 2 * 2})
+    db.write(measurement='humidity',
+                fields={'value': 70},
+                tags={'location': 'office'})
     
     stats = db.get_stats()
     print(f"\nDatabase stats:")
@@ -127,16 +135,8 @@ def example_multiple_series():
     print(f"  Series count: {stats['series_count']}")  # Should be 3 (one per sensor)
     print(f"  Measurements: {stats['measurements']}")
     
-    # Query all humidity data
-    all_humidity = db.query(measurement='humidity')
-    print(f"\nTotal humidity points: {len(all_humidity)}")
-    
-    # Query specific sensor
-    sensor1_data = db.query(
-        measurement='humidity',
-        tags={'sensor': 'sensor1'}
-    )
-    print(f"Points from sensor1: {len(sensor1_data)}")
+    all_time_series = db.get_all_series_keys()
+    print(f"All time series {all_time_series}")
 
 
 def example_point_objects():
@@ -307,6 +307,11 @@ def example_search_platform():
     print_point(min_jira_west)
     print_point(max_jira_west)
 
+def compression_example():
+    cpu_usage_list = [random.randint(1, 100) for _ in range(1000000)]
+    CompressionUtil.compress_simple(cpu_usage_list)
+    CompressionUtil.compress_after_xor(cpu_usage_list)
+
 
 def print_point(point: Point):
     """Helper function to print a Point object"""
@@ -318,5 +323,6 @@ if __name__ == '__main__':
 #     example_query_builder()
 #     example_multiple_series()
 #     example_point_objects()
-    example_search_platform()
+#    example_search_platform()
+    compression_example()
 
