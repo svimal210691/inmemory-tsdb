@@ -311,14 +311,14 @@ def compression_example():
     cpu_usage_list = [random.randint(1, 100) for _ in range(1000000)]
     print("Simple compression")
     CompressionUtil.compress_list_simple(cpu_usage_list)
-    print("Compression after XOR")
+    print("\nCompression after XOR")
     CompressionUtil.compress_list_after_xor(cpu_usage_list)
 
-    print("Compressing timestamps simple")
+    print("\nCompressing timestamps simple")
     timestamp_list = [(datetime.now() - timedelta(hours=random.randint(0, 24))) for i in range(1000000)]
     CompressionUtil.compress_timestamps(timestamp_list)
 
-    print("Compressing timestamps delta of delta")
+    print("\nCompressing timestamps delta of delta")
     CompressionUtil.compress_timestamps_delta(timestamp_list)
 
 
