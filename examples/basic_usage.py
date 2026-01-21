@@ -8,6 +8,8 @@ import os
 from datetime import datetime, timedelta
 import random
 
+from src.aggregatemetric import AggregateMetric
+
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -324,16 +326,16 @@ def compression_example():
 
 
 
-def print_point(point: Point):
+def print_point(aggregate: AggregateMetric):
     """Helper function to print a Point object"""
-    print(f"Measurement: {point.measurement}, Tags: {point.tags}, "
-          f"Fields: {point.fields}, Timestamp: {point.timestamp}")
+    print(f"Measurement: {aggregate.measurement}, Tags: {aggregate.tags}, "
+          f"Fields: {aggregate.value}")
 
 if __name__ == '__main__':
 #     example_basic_write_and_query()
 #     example_query_builder()
 #     example_multiple_series()
 #     example_point_objects()
-#    example_search_platform()
-    compression_example()
+    example_search_platform()
+#    compression_example()
 
